@@ -30,8 +30,8 @@ var client *redis.Client
 
 func init() {
 	client = redis.NewClient(&redis.Options{
-		Addr:     os.Getenv("REDIS_URL"),
-		Password: os.Getenv("REDIS_PASSWORD"),
+		Addr: "redis-15342.c264.ap-south-1-1.ec2.cloud.redislabs.com:15342",
+		Password: "nYyLbVaJpItDhGWBIgIDBGlMZsRMZhnp",
 	})
 	_, err := client.Ping(context.Background()).Result()
 	if err != nil {
@@ -337,6 +337,10 @@ func main() {
 	http.HandleFunc("/get-user-details", getuserdetails)
 	http.HandleFunc("/ws", handleWebSocket)
 	port := os.Getenv("PORT")
+
+	port == "" {
+		port = "3000"
+		}
 	fmt.Println("Server listening on port 8080")
 	err := http.ListenAndServe("0.0.0.0"+port, nil)
 	if err != nil {
