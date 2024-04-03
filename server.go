@@ -336,15 +336,10 @@ func main() {
 	http.HandleFunc("/get-user", getUser)
 	http.HandleFunc("/get-user-details", getuserdetails)
 	http.HandleFunc("/ws", handleWebSocket)
-	port := os.Getenv("PORT")
 
-	port == "" {
-		port = "3000"
-		}
 	fmt.Println("Server listening on port 8080")
-	err := http.ListenAndServe("0.0.0.0"+port, nil)
+	err := http.ListenAndServe(":8080", nil)
 	if err != nil {
 		panic(err)
 	}
-	log.Fatal(http.ListenAndServe("0.0.0.0"+port, nil))
 }
