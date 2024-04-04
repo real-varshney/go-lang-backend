@@ -4,15 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
-	"os"
 	"sort"
 	"strings"
-	"log/slog"
-	"time"
-	"strconv"
-		
+
 	"github.com/gorilla/websocket"
 	"github.com/redis/go-redis/v9"
 )
@@ -33,7 +28,7 @@ var client *redis.Client
 
 func init() {
 	client = redis.NewClient(&redis.Options{
-		Addr: "redis-15342.c264.ap-south-1-1.ec2.cloud.redislabs.com:15342",
+		Addr:     "redis-15342.c264.ap-south-1-1.ec2.cloud.redislabs.com:15342",
 		Password: "nYyLbVaJpItDhGWBIgIDBGlMZsRMZhnp",
 	})
 	_, err := client.Ping(context.Background()).Result()
@@ -280,22 +275,6 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 				}
 
 			}
-			// else {
-			// 	if
-			// 	// Check for all expected fields regardless of subscription status
-			// 	if username, ok := data["username"].(string); ok {
-			// 		if newScore, ok := data["score"].(float64); ok {
-			// 			err := updateScore(username, int(newScore)) // Cast float to int for score
-			// 			if err != nil {
-			// 				fmt.Println("Error updating score:", err)
-			// 			}
-			// 		} else {
-			// 			fmt.Println("Missing or invalid 'score' field in message")
-			// 		}
-			// 	} else {
-			// 		fmt.Println("Missing or invalid 'username' field in message")
-			// 	}
-			// }
 		}
 		// delete(leaderboardSubscribers, ws)
 		// fmt.Println("Client disconnected", data[name])
@@ -340,41 +319,9 @@ func main() {
 	http.HandleFunc("/get-user-details", getuserdetails)
 	http.HandleFunc("/ws", handleWebSocket)
 
-	var cfg config
-
-	// Try to read environment variable for port (given by railway). Otherwise use default
-	port := os.Getenv("PORT")
-	intPort, err := strconv.Atoi(port)
+	fmt.Println("Server listening on port 8080")
+	err := http.ListenAndServe(":8080", nil)
 	if err != nil {
-		intPort = 4000
+		panic(err)
 	}
-
-	// Set the port to run the API on
-	cfg.port = intPort
-
-	// create the logger
-	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
-
-	// create the application
-	app := &application{
-		config: cfg,
-		logger: logger,
-	}
-
-	// create the server
-	srv := &http.Server{
-		Addr:         fmt.Sprintf(":%d", cfg.port),
-		Handler:      app.routes(),
-		IdleTimeout:  45 * time.Second,
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 10 * time.Second,
-		ErrorLog:     slog.NewLogLogger(logger.Handler(), slog.LevelError),
-	}
-
-	logger.Info("server started", "addr", srv.Addr)
-
-	// Start the server
-	err = srv.ListenAndServe()
-	logger.Error(err.Error())
-	os.Exit(1)
 }
