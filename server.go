@@ -37,6 +37,18 @@ func init() {
 	}
 	leaderboardSubscribers = make(map[*websocket.Conn]bool)
 }
+func start(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*") // Replace with your frontend's origin
+	if r.Method == http.MethodOptions {
+		// Handle preflight request
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS") // Allowed methods
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")       // Allowed headers (adjust as needed)
+		w.WriteHeader(http.StatusOK)                                         // Set successful status code
+		return
+	}
+	fmt.Fprintf(w, "Server is running")
+
+}
 
 func addUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*") // Replace with your frontend's origin
@@ -314,6 +326,7 @@ func getuserdetails(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	http.HandleFunc("/", start)
 	http.HandleFunc("/add-user", addUser)
 	http.HandleFunc("/get-user", getUser)
 	http.HandleFunc("/get-user-details", getuserdetails)
