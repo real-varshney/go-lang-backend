@@ -28,8 +28,8 @@ var client *redis.Client
 
 func init() {
 	client = redis.NewClient(&redis.Options{
-		Addr:     "redis-15342.c264.ap-south-1-1.ec2.cloud.redislabs.com:15342",
-		Password: "nYyLbVaJpItDhGWBIgIDBGlMZsRMZhnp",
+		Addr:     "redis-18666.c212.ap-south-1-1.ec2.cloud.redislabs.com:18666",
+		Password: "nGFaoupy2KKTo7pZgJKqjWc30xwjsEo0",
 	})
 	_, err := client.Ping(context.Background()).Result()
 	if err != nil {
