@@ -50,55 +50,75 @@ func start(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func addUser(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*") // Replace with your frontend's origin
-	if r.Method == http.MethodOptions {
-		// Handle preflight request
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS") // Allowed methods
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")       // Allowed headers (adjust as needed)
-		w.WriteHeader(http.StatusOK)                                         // Set successful status code
-		return
-	}
-	defer r.Body.Close()
 
-	var user GameState
-	err := json.NewDecoder(r.Body).Decode(&user)
-	if err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
-
-	// Check if username already exists
-	usernameKey := "user:" + user.Username
-	userGameState, err := client.Get(context.Background(), usernameKey).Result()
-	if err == nil {
-		// Username exists, retrieve score
-		var existingUser GameState
-		err = json.Unmarshal([]byte(userGameState), &existingUser)
-		if err != nil {
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
-			return
-		}
-		fmt.Fprintf(w, "User %s already exists with a score of %d", user.Username, existingUser.Score)
-		return
-	}
-
-	// If not found, proceed with adding the user
-	gameStateJSON, err := json.Marshal(user)
-	if err != nil {
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
-
-	err = client.Set(context.Background(), usernameKey, gameStateJSON, 0).Err()
-	if err != nil {
-		http.Error(w, "Failed to add user", http.StatusInternalServerError)
-		return
-	}
-
-	fmt.Fprintf(w, "User %s added successfully!", user.Username)
+type UserResponse struct {
+    Username string
+    Score    int
+    State    string
 }
+func addUser(w http.ResponseWriter, r *http.Request) {
+    w.Header().Set("Access-Control-Allow-Origin", "*") // Replace with your frontend's origin
+    if r.Method == http.MethodOptions {
+        // Handle preflight request
+        w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS") // Allowed methods
+        w.Header().Set("Access-Control-Allow-Headers", "Content-Type")       // Allowed headers (adjust as needed)
+        w.WriteHeader(http.StatusOK)                                         // Set successful status code
+        return
+    }
+    defer r.Body.Close()
 
+    var user GameState
+    err := json.NewDecoder(r.Body).Decode(&user)
+    if err != nil {
+        http.Error(w, "Invalid request body", http.StatusBadRequest)
+        return
+    }
+
+    // Check if username already exists
+    usernameKey := "user:" + user.Username
+    userGameState, err := client.Get(context.Background(), usernameKey).Result()
+    if err == nil {
+        // Username exists, retrieve score
+        var existingUser GameState
+        err = json.Unmarshal([]byte(userGameState), &existingUser)
+        if err != nil {
+            http.Error(w, "Internal server error", http.StatusInternalServerError)
+            return
+        }
+        // Prepare the response object for existing users
+        response := UserResponse{
+            Username: existingUser.Username,
+            Score:    existingUser.Score,
+            State:    "already exists",
+        }
+        w.Header().Set("Content-Type", "application/json")
+        json.NewEncoder(w).Encode(response)
+        return
+    }
+
+    // If not found, proceed with adding the user
+    user.Score = 0 // Set score to 0 for new users
+    response := UserResponse{
+        Username: user.Username,
+        Score:    user.Score,
+        State:    "newly added",
+    }
+    gameStateJSON, err := json.Marshal(user)
+    if err != nil {
+        http.Error(w, "Internal server error", http.StatusInternalServerError)
+        return
+    }
+
+    err = client.Set(context.Background(), usernameKey, gameStateJSON, 0).Err()
+    if err != nil {
+        http.Error(w, "Failed to add user", http.StatusInternalServerError)
+        return
+    }
+
+    // Send the response object for new users
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(response)
+}
 func getUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*") // Replace with your frontend's origin
 	if r.Method == http.MethodOptions {
